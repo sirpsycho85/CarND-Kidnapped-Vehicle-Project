@@ -9,15 +9,33 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
-
 #include "particle_filter.h"
 
-void ParticleFilter::init(double x, double y, double theta, double std[]) {
-	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
-	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
-	// Add random Gaussian noise to each particle.
-	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
+using namespace std;
 
+void ParticleFilter::init(double x, double y, double theta, double std[]) {
+	// TODO: set all weights to 1. 
+	// TODO: Do you need to add MORE random Gaussian noise to each particle?
+	num_particles = 10;
+
+	double std_x, std_y, std_theta;
+	std_x = std[0];
+	std_y = std[1];
+	std_theta = std[2];
+
+	default_random_engine gen;
+	normal_distribution<double> dist_x(x, std_x);
+	normal_distribution<double> dist_y(y, std_y);
+	normal_distribution<double> dist_theta(theta, std_theta);
+
+	double sample_x, sample_y, sample_theta;
+	for (int i = 0; i < num_particles; ++i) {
+		sample_x = dist_x(gen);
+		sample_y = dist_y(gen);
+		sample_theta = dist_theta(gen);
+	}
+
+	is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
@@ -33,6 +51,10 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	//   observed measurement to this particular landmark.
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
+
+	//first vector is predicted measurement between one particle and all map landmarks within range
+	//second vector is actual measurements from lidar
+	//perform nearest neighbor with those inputs
 
 }
 

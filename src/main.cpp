@@ -78,7 +78,7 @@ int main() {
 	double cum_mean_error[3] = {0,0,0};
 	
 	for (int i = 0; i < num_time_steps; ++i) {
-		cout << "Time step: " << i << endl;
+		//cout << "Time step: " << i << endl;
 		// Read in landmark observations for current time step.
 		ostringstream file;
 		file << "data/observation/observations_" << setfill('0') << setw(6) << i+1 << ".txt";
@@ -134,7 +134,7 @@ int main() {
 		}
 		
 		// Print the cumulative weighted error
-		cout << "Cumulative mean weighted error: x " << cum_mean_error[0] << " y " << cum_mean_error[1] << " yaw " << cum_mean_error[2] << endl;
+		//cout << "Cumulative mean weighted error: x " << cum_mean_error[0] << " y " << cum_mean_error[1] << " yaw " << cum_mean_error[2] << endl;
 		
 		// If the error is too high, say so and then exit.
 		if (i >= time_steps_before_lock_required) {
