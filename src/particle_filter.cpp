@@ -9,14 +9,15 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
+#include <cmath>
 #include "particle_filter.h"
 
 using namespace std;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
-	// TODO: set all weights to 1. 
-	// TODO: Do you need to add MORE random Gaussian noise to each particle?
-	num_particles = 10;
+	num_particles_ = 10;
+	particles_.resize(num_particles_);
+	weights_.resize(num_particles_);
 
 	double std_x, std_y, std_theta;
 	std_x = std[0];
@@ -28,22 +29,60 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	normal_distribution<double> dist_y(y, std_y);
 	normal_distribution<double> dist_theta(theta, std_theta);
 
-	double sample_x, sample_y, sample_theta;
-	for (int i = 0; i < num_particles; ++i) {
-		sample_x = dist_x(gen);
-		sample_y = dist_y(gen);
-		sample_theta = dist_theta(gen);
+	for (int i = 0; i < num_particles_; ++i) {
+		struct Particle temp_particle;
+		temp_particle.id = i;
+		temp_particle.x = dist_x(gen);
+		temp_particle.y = dist_y(gen);
+		temp_particle.theta = dist_theta(gen);
+		temp_particle.weight = 1;
+
+		particles_[i] = temp_particle;
+		weights_[i] = temp_particle.weight;
 	}
 
-	is_initialized = true;
+	is_initialized_ = true;
+
+	//TODO: do I need a new struct each time? how assignment works...
+	//TODO: do I need to create new default_random_engine each time?
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
-	// TODO: Add measurements to each particle and add random Gaussian noise.
-	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
-	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
-	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
+	cout << "v = " << velocity
+		<< "\tx = " << particles_[0].x
+		<< "\ty = " << particles_[0].y << endl;
+	default_random_engine gen;
+
+	for(int i = 0; i < num_particles_; ++i) {
+
+		particles_[i].x += velocity/yaw_rate
+			* (sin(particles_[i].theta + yaw_rate*delta_t) 
+				- sin(particles_[i].theta));
+
+		particles_[i].y += velocity/yaw_rate
+			* (cos(particles_[i].theta)
+				- cos(particles_[i].theta + yaw_rate*delta_t));
+
+		particles_[i].theta += yaw_rate*delta_t;
+
+		normal_distribution<double> dist_x(particles_[i].x, std_pos[0]);
+		normal_distribution<double> dist_y(particles_[i].y, std_pos[1]);
+		normal_distribution<double> dist_theta(particles_[i].theta, std_pos[2]);
+
+		particles_[i].x += dist_x(gen);
+		particles_[i].y += dist_y(gen);
+		particles_[i].theta += dist_theta(gen);
+
+		// TODO: fix equations. without noise, doesn't seem right
+		// with noise it grows like crazy
+
+		// TODO: update - mean will be the new position, stddev is based on meas uncertainty
+		//TODO why are measurement uncertainties used? Shouldn't process uncertanties also be used?
+		// trying to reconcile with Kalman filter
+
+		//TODO when this is called from main why does it say "noiseless"
+	}
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
@@ -84,8 +123,8 @@ void ParticleFilter::write(std::string filename) {
 	// You don't need to modify this file.
 	std::ofstream dataFile;
 	dataFile.open(filename, std::ios::app);
-	for (int i = 0; i < num_particles; ++i) {
-		dataFile << particles[i].x << " " << particles[i].y << " " << particles[i].theta << "\n";
+	for (int i = 0; i < num_particles_; ++i) {
+		dataFile << particles_[i].x << " " << particles_[i].y << " " << particles_[i].theta << "\n";
 	}
 	dataFile.close();
 }
