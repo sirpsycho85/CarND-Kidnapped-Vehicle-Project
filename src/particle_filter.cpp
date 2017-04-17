@@ -49,10 +49,10 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
 
-	cout << "v = " << velocity << "\tdt = " << delta_t
+	/*cout << "v = " << velocity << "\tdt = " << delta_t
 		<< "\tx = " << particles_[1].x
 		<< "\ty = " << particles_[1].y
-		<< endl;
+		<< endl;*/
 
 	for(int i = 0; i < num_particles_; ++i) {
 		double x, y, theta;
