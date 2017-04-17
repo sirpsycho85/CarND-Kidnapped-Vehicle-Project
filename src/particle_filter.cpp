@@ -15,6 +15,7 @@
 using namespace std;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
+	
 	num_particles_ = 10;
 	particles_.resize(num_particles_);
 	weights_.resize(num_particles_);
@@ -24,7 +25,6 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	std_y = std[1];
 	std_theta = std[2];
 
-	default_random_engine gen;
 	normal_distribution<double> dist_x(x, std_x);
 	normal_distribution<double> dist_y(y, std_y);
 	normal_distribution<double> dist_theta(theta, std_theta);
@@ -32,9 +32,9 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	for (int i = 0; i < num_particles_; ++i) {
 		struct Particle temp_particle;
 		temp_particle.id = i;
-		temp_particle.x = dist_x(gen);
-		temp_particle.y = dist_y(gen);
-		temp_particle.theta = dist_theta(gen);
+		temp_particle.x = dist_x(gen_);
+		temp_particle.y = dist_y(gen_);
+		temp_particle.theta = dist_theta(gen_);
 		temp_particle.weight = 1;
 
 		particles_[i] = temp_particle;
@@ -49,39 +49,38 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
 
-	cout << "v = " << velocity
-		<< "\tx = " << particles_[0].x
-		<< "\ty = " << particles_[0].y << endl;
-	default_random_engine gen;
+	cout << "v = " << velocity << "\tdt = " << delta_t
+		<< "\tx = " << particles_[1].x
+		<< "\ty = " << particles_[1].y
+		<< endl;
 
 	for(int i = 0; i < num_particles_; ++i) {
+		double x, y, theta;
+		x = particles_[i].x;
+		y = particles_[i].y;
+		theta = particles_[i].theta;
 
 		particles_[i].x += velocity/yaw_rate
-			* (sin(particles_[i].theta + yaw_rate*delta_t) 
-				- sin(particles_[i].theta));
+			* (sin(theta + yaw_rate*delta_t) - sin(theta));
 
 		particles_[i].y += velocity/yaw_rate
-			* (cos(particles_[i].theta)
-				- cos(particles_[i].theta + yaw_rate*delta_t));
+			* (cos(theta) - cos(theta + yaw_rate*delta_t));
 
 		particles_[i].theta += yaw_rate*delta_t;
 
-		normal_distribution<double> dist_x(particles_[i].x, std_pos[0]);
-		normal_distribution<double> dist_y(particles_[i].y, std_pos[1]);
-		normal_distribution<double> dist_theta(particles_[i].theta, std_pos[2]);
+		normal_distribution<double> dist_x(0, std_pos[0]);
+		normal_distribution<double> dist_y(0, std_pos[1]);
+		normal_distribution<double> dist_theta(0, std_pos[2]);
 
-		particles_[i].x += dist_x(gen);
-		particles_[i].y += dist_y(gen);
-		particles_[i].theta += dist_theta(gen);
+		particles_[i].x += dist_x(gen_);
+		particles_[i].y += dist_y(gen_);
+		particles_[i].theta += dist_theta(gen_);
 
-		// TODO: fix equations. without noise, doesn't seem right
-		// with noise it grows like crazy
-
-		// TODO: update - mean will be the new position, stddev is based on meas uncertainty
-		//TODO why are measurement uncertainties used? Shouldn't process uncertanties also be used?
-		// trying to reconcile with Kalman filter
+		//TODO why measurement uncertainties, not process uncertanties. Reconcile with Kalman.
 
 		//TODO when this is called from main why does it say "noiseless"
+
+		//TODO why is error always the same, even after clean and recompile.
 	}
 }
 

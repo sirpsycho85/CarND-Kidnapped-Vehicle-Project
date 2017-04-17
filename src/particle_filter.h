@@ -26,6 +26,7 @@ class ParticleFilter {
 	int num_particles_; 
 	bool is_initialized_;
 	std::vector<double> weights_;
+	std::default_random_engine gen_;
 	
 public:
 	std::vector<Particle> particles_;
