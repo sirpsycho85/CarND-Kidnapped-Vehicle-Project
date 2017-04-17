@@ -85,19 +85,29 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
+	/*
 	// TODO: Find the predicted measurement that is closest to each observed measurement and assign the 
 	//   observed measurement to this particular landmark.
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
 
-	//first vector is predicted measurement between one particle and all map landmarks within range
-	//second vector is actual measurements from lidar
-	//perform nearest neighbor with those inputs
+	predicted is distances from one particle's perspective to all map landmarks within range
+		so the landmark IDs are known
+	observations is actual measurements from lidar
+	perform nearest neighbor with those inputs
+		so you can assign the landmark ID to the actual measurement
+
+	for every actual measurement from lidar
+		find the predicted that's closest
+		assign the landmark id from the predicted to the actual measurement
+
+	*/
 
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
 		std::vector<LandmarkObs> observations, Map map_landmarks) {
+
 	// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
 	//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
 	// NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
