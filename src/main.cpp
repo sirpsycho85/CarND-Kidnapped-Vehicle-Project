@@ -21,7 +21,7 @@ int main() {
 	
 	// parameters related to grading.
 	int time_steps_before_lock_required = 100; // number of time steps before accuracy is checked by grader.
-	double max_runtime = 45; // Max allowable runtime to pass [sec]
+	double max_runtime = 45; // Max allowable runtime to passed [sec]
 	double max_translation_error = 1; // Max allowable translation error to pass [m]
 	double max_yaw_error = 0.05; // Max allowable yaw error [rad]
 
@@ -116,7 +116,7 @@ int main() {
 		pf.resample();
 		
 		// Calculate and output the average weighted error of the particle filter over all time steps so far.
-		vector<Particle> particles = pf.particles_;
+		vector<Particle> particles = pf.particles;
 		int num_particles = particles.size();
 		double highest_weight = 0.0;
 		Particle best_particle;

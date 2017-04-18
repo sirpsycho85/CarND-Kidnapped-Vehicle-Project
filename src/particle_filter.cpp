@@ -14,11 +14,13 @@
 
 using namespace std;
 
+default_random_engine gen;
+
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	
-	num_particles_ = 10;
-	particles_.resize(num_particles_);
-	weights_.resize(num_particles_);
+	num_particles = 10;
+	particles.resize(num_particles);
+	weights.resize(num_particles);
 
 	double std_x, std_y, std_theta;
 	std_x = std[0];
@@ -29,52 +31,53 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	normal_distribution<double> dist_y(y, std_y);
 	normal_distribution<double> dist_theta(theta, std_theta);
 
-	for (int i = 0; i < num_particles_; ++i) {
+	for (int i = 0; i < num_particles; ++i) {
 		struct Particle temp_particle;
 		temp_particle.id = i;
-		temp_particle.x = dist_x(gen_);
-		temp_particle.y = dist_y(gen_);
-		temp_particle.theta = dist_theta(gen_);
+		temp_particle.x = dist_x(gen);
+		temp_particle.y = dist_y(gen);
+		temp_particle.theta = dist_theta(gen);
 		temp_particle.weight = 1;
 
-		particles_[i] = temp_particle;
-		weights_[i] = temp_particle.weight;
+		particles[i] = temp_particle;
+		weights[i] = temp_particle.weight;
 	}
 
-	is_initialized_ = true;
+	is_initialized = true;
 
 	//TODO: do I need a new struct each time? how assignment works...
 	//TODO: do I need to create new default_random_engine each time?
+	// having an separate array of weights helps you pass that as a parameter to the function discrete_distribution
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
 
 	/*cout << "v = " << velocity << "\tdt = " << delta_t
-		<< "\tx = " << particles_[1].x
-		<< "\ty = " << particles_[1].y
+		<< "\tx = " << particles[1].x
+		<< "\ty = " << particles[1].y
 		<< endl;*/
 
-	for(int i = 0; i < num_particles_; ++i) {
+	for(int i = 0; i < num_particles; ++i) {
 		double x, y, theta;
-		x = particles_[i].x;
-		y = particles_[i].y;
-		theta = particles_[i].theta;
+		x = particles[i].x;
+		y = particles[i].y;
+		theta = particles[i].theta;
 
-		particles_[i].x += velocity/yaw_rate
+		particles[i].x += velocity/yaw_rate
 			* (sin(theta + yaw_rate*delta_t) - sin(theta));
 
-		particles_[i].y += velocity/yaw_rate
+		particles[i].y += velocity/yaw_rate
 			* (cos(theta) - cos(theta + yaw_rate*delta_t));
 
-		particles_[i].theta += yaw_rate*delta_t;
+		particles[i].theta += yaw_rate*delta_t;
 
 		normal_distribution<double> dist_x(0, std_pos[0]);
 		normal_distribution<double> dist_y(0, std_pos[1]);
 		normal_distribution<double> dist_theta(0, std_pos[2]);
 
-		particles_[i].x += dist_x(gen_);
-		particles_[i].y += dist_y(gen_);
-		particles_[i].theta += dist_theta(gen_);
+		particles[i].x += dist_x(gen);
+		particles[i].y += dist_y(gen);
+		particles[i].theta += dist_theta(gen);
 
 		//TODO why measurement uncertainties, not process uncertanties. Reconcile with Kalman.
 
@@ -132,8 +135,8 @@ void ParticleFilter::write(std::string filename) {
 	// You don't need to modify this file.
 	std::ofstream dataFile;
 	dataFile.open(filename, std::ios::app);
-	for (int i = 0; i < num_particles_; ++i) {
-		dataFile << particles_[i].x << " " << particles_[i].y << " " << particles_[i].theta << "\n";
+	for (int i = 0; i < num_particles; ++i) {
+		dataFile << particles[i].x << " " << particles[i].y << " " << particles[i].theta << "\n";
 	}
 	dataFile.close();
 }

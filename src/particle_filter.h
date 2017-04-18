@@ -23,17 +23,16 @@ struct Particle {
 
 
 class ParticleFilter {
-	int num_particles_; 
-	bool is_initialized_;
-	std::vector<double> weights_;
-	std::default_random_engine gen_;
+	int num_particles; 
+	bool is_initialized;
+	std::vector<double> weights;
 	
 public:
-	std::vector<Particle> particles_;
+	std::vector<Particle> particles;
 
 	// Constructor
 	// @param M Number of particles
-	ParticleFilter() : num_particles_(0), is_initialized_(false) {}
+	ParticleFilter() : num_particles(0), is_initialized(false) {}
 
 	// Destructor
 	~ParticleFilter() {}
@@ -96,7 +95,7 @@ public:
 	 * initialized Returns whether particle filter is initialized yet or not.
 	 */
 	const bool initialized() const {
-		return is_initialized_;
+		return is_initialized;
 	}
 };
 
