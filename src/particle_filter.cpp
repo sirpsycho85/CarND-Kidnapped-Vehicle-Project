@@ -14,6 +14,13 @@
 
 using namespace std;
 
+//TODO: remove a lot of unnecessary copying
+
+// declaring some functions bc don't want to touch .h file for autograder
+vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle, vector<Map::single_landmark_s> landmark_list, double sensor_range);
+vector<Map::single_landmark_s> ConvertToParticleCoordinates(struct Particle particle, vector<Map::single_landmark_s> landmark_list);
+vector<LandmarkObs> CastLandmarksAsObservations(vector<Map::single_landmark_s> landmark_list);
+
 default_random_engine gen;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
@@ -49,6 +56,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	//TODO: do I need to create new default_random_engine each time?
 	// having an separate array of weights helps you pass that as a parameter to the function discrete_distribution
 }
+
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
 
@@ -87,27 +95,11 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	}
 }
 
-void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
-	/*
-	// TODO: Find the predicted measurement that is closest to each observed measurement and assign the 
-	//   observed measurement to this particular landmark.
-	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
-	//   implement this method and use it as a helper during the updateWeights phase.
 
-	predicted is distances from one particle's perspective to all map landmarks within range
-		so the landmark IDs are known
-	observations is actual measurements from lidar
-	perform nearest neighbor with those inputs
-		so you can assign the landmark ID to the actual measurement
-	now you have for each particle, a mapping between actual measurements and landmarks
-		how close these are corresponds to the weight you give each particle
-
-	for every actual measurement from lidar
-		find the predicted that's closest
-		assign the landmark id from the predicted to the actual measurement
-
-	*/
-	double min_dist, current_dist;
+void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, vector<LandmarkObs>& observations) {
+	
+	double min_dist;
+	double current_dist;
 	int nearest_landmark_id;
 
 	for(int i = 0; i < observations.size(); ++i) {
@@ -116,7 +108,9 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 		nearest_landmark_id = predicted[0].id;
 		
 		for(int j = 1; j < predicted.size(); ++j) {
+			
 			current_dist = dist(observations[i].x, observations[i].y, predicted[j].x, predicted[j].y);
+			
 			if(current_dist < min_dist) {
 				nearest_landmark_id = predicted[j].id;
 			}
@@ -124,81 +118,125 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 
 		observations[i].id = nearest_landmark_id;
 	}
-
 }
 
-void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
-		std::vector<LandmarkObs> observations, Map map_landmarks) {
-	
-	std::vector<LandmarkObs> predicted;
 
-	vector<Map::single_landmark_s> landmark_list = map_landmarks.landmark_list;
+void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
+		vector<LandmarkObs> observations, Map map_landmarks) {
+
+
+	// TODO: normalize weights
+	// TODO: handle empty 'predicted' or 'observations'
+	// TODO: how do you know the map y points downward?
+	// TODO: rotation matrix in article disagrees with wiki...
+	// Note: Might be convenient in dataAssociation to create a new vector with actual landmarks
+	// 		That way you don't have to search through them again
+
+	/*for each particle:
+		landmarks_in_range = GetLandmarksWithingSensorRange(particle,landmarks,sensorRange)
+		converted_landmarks = ConvertToParticleCoordinates(particle,remaining_landmarks)
+		chosen_matched_observations = observations // just a copy for input into next function
+		dataAssociation(converted_landmarks ,chosen_matched_observations )
+		UpdateParticleWeights(particle,observations, chosen_matched_observations )*/	
+	
+	//Other notes
+		// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
+		//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
+		// NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
+		//   according to the MAP'S coordinate system. You will need to transform between the two systems.
+		//   Keep in mind that this transformation requires both rotation AND translation (but no scaling).
+		//   The following is a good resource for the theory:
+		//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
+		//   and the following is a good resource for the actual equation to implement (look at equation 
+		//   3.33. Note that you'll need to switch the minus sign in that equation to a plus to account 
+		//   for the fact that the map's y-axis actually points downwards.)
+		//   http://planning.cs.uiuc.edu/node99.html
+
+		//make a copy of the observations
+			//for each landmark
+			//  if within range
+			//    convert to particle coordianate system
+			//    dataAssiciation: update copy of observations with landmark IDs
+			//translation
 
 	for(int p_num = 0; p_num < num_particles; ++p_num) {
-		//translation
-		double p_x = particles[p_num].x;
-		double p_y = particles[p_num].y;
-		double p_theta = particles[p_num].x;
+		
+		vector<Map::single_landmark_s> landmarks_in_range, converted_landmarks;
+		vector<LandmarkObs> converted_landmarks_observations, associated_observations;
 
-		for(int o_num = 0; o_num < observations.size(); ++o_num) {
-			double o_x = observations[o_num].x;
-			double o_y = observations[o_num].y;
-			
-			double temp_x = o_x*cos(p_theta) + o_y*sin(p_theta) + p_x;
-			double temp_y = o_x*sin(p_theta) + o_y*cos(p_theta) + p_y;
-			
-			observations[o_num].x = temp_x;
-			observations[o_num].y = temp_y;
-		}
+		landmarks_in_range = GetLandmarksWithinRange(particles[p_num], map_landmarks.landmark_list, sensor_range);
 
-		//for each landmark...
-		for(int lm_num = 0; lm_num < landmark_list.size(); ++lm_num) {
-			double lm_dist = dist(p_x, p_y, landmark_list[lm_num].x_f, landmark_list[lm_num].y_f);
-			if(lm_dist < sensor_range) {
-				struct LandmarkObs predicted_landmark;
+		converted_landmarks = ConvertToParticleCoordinates(particles[p_num], landmarks_in_range);
 
-				//TODO - need to add measurements not absolute positions right?
-				predicted_landmark.x = landmark_list[lm_num].x_f;
-				predicted_landmark.y = landmark_list[lm_num].y_f;
-				predicted_landmark.id = landmark_list[lm_num].id_i;
-				
-				predicted.push_back(predicted_landmark);
-			}
+		converted_landmarks_observations = CastLandmarksAsObservations(converted_landmarks);
+
+		associated_observations = observations;
+
+		dataAssociation(converted_landmarks_observations, associated_observations);
+	}
+}
+
+
+vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle, vector<Map::single_landmark_s> landmark_list, double sensor_range) {
+	
+	vector<Map::single_landmark_s> landmarks_in_range;
+	
+	for(int lm_num = 0; lm_num < landmark_list.size(); ++lm_num) {
+		
+		double lm_dist = dist(particle.x, particle.y, landmark_list[lm_num].x_f, landmark_list[lm_num].y_f);
+
+		if(lm_dist < sensor_range) {
+			landmarks_in_range.push_back(landmark_list[lm_num]);
 		}
 	}
 
-	// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
-	//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-	// NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
-	//   according to the MAP'S coordinate system. You will need to transform between the two systems.
-	//   Keep in mind that this transformation requires both rotation AND translation (but no scaling).
-	//   The following is a good resource for the theory:
-	//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-	//   and the following is a good resource for the actual equation to implement (look at equation 
-	//   3.33. Note that you'll need to switch the minus sign in that equation to a plus to account 
-	//   for the fact that the map's y-axis actually points downwards.)
-	//   http://planning.cs.uiuc.edu/node99.html
-
-	/*
-	For each particle
-		Transform observations into map coordiante system
-		For each landmark
-			Calculate distance to each actual landmark (predict measurements)
-			If it's within sensor_range, add as a LandmarkObs to 'predicted'
-		Call data association to update measurements with landmark IDs
-		Update weights with multi-variate Gaussian
-			Note: The same landmark within range may be the nearest for a measurement
-			Note: Might be convenient in dataAssociation to create a new vector with actual landmarks
-			That way you don't have to search through them again
-		Normalize weights
-	*/
-
-	// TODO: handle empty 'predicted' or 'observations'
-	// TODO: how do you know the map y points downward?
-	// TODO: rotation matrix in article disagrees with wiki
-	// TODO: not clear if the transformation is correct. See what happens to x for a measurement after translating, given some theta for a particle
-	// 			also distances seem large
+	return landmarks_in_range;
 }
+
+
+vector<Map::single_landmark_s> ConvertToParticleCoordinates(struct Particle particle, vector<Map::single_landmark_s> landmark_list) {
+	
+	vector<Map::single_landmark_s> converted_landmarks;
+
+	double p_x = particle.x;
+	double p_y = particle.y;
+	double p_theta = particle.theta;
+
+	for(int lm_num = 0; lm_num < landmark_list.size(); ++lm_num) {
+		
+		double lm_x = landmark_list[lm_num].x_f;
+		double lm_y = landmark_list[lm_num].y_f;
+		
+		double temp_x = lm_x*cos(p_theta) + lm_y*sin(p_theta) + p_x;
+		double temp_y = lm_x*sin(p_theta) + lm_y*cos(p_theta) + p_y;
+
+		Map::single_landmark_s converted_landmark;
+		converted_landmark.id_i = landmark_list[lm_num].id_i;
+		converted_landmark.x_f = temp_x;
+		converted_landmark.y_f = temp_y;
+
+		converted_landmarks.push_back(converted_landmark);
+	}
+
+	return converted_landmarks;
+}
+
+
+vector<LandmarkObs> CastLandmarksAsObservations(vector<Map::single_landmark_s> landmark_list) {
+	
+	vector<LandmarkObs> observations;
+	
+	for(int lm_num = 0; lm_num < landmark_list.size(); ++lm_num) {
+		LandmarkObs obs;
+		obs.x = landmark_list[lm_num].x_f;
+		obs.y = landmark_list[lm_num].y_f;
+		obs.id = landmark_list[lm_num].id_i;
+		observations.push_back(obs);
+	}
+
+	return observations;
+}
+
 
 void ParticleFilter::resample() {
 	// TODO: Resample particles with replacement with probability proportional to their weight. 
@@ -207,10 +245,10 @@ void ParticleFilter::resample() {
 
 }
 
-void ParticleFilter::write(std::string filename) {
+void ParticleFilter::write(string filename) {
 	// You don't need to modify this file.
-	std::ofstream dataFile;
-	dataFile.open(filename, std::ios::app);
+	ofstream dataFile;
+	dataFile.open(filename, ios::app);
 	for (int i = 0; i < num_particles; ++i) {
 		dataFile << particles[i].x << " " << particles[i].y << " " << particles[i].theta << "\n";
 	}

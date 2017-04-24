@@ -26,7 +26,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/particle_filter_sol.cpp")
 	add_executable(particle_filter_solution ${SRCS})
 endif()
 
-
+add_definitions(-std=c++0x -Wall)
 
 
 
