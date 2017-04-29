@@ -18,7 +18,9 @@ using namespace std;
 
 
 int main() {
-	
+
+	bool verbose = true;
+
 	// parameters related to grading.
 	int time_steps_before_lock_required = 100; // number of time steps before accuracy is checked by grader.
 	double max_runtime = 45; // Max allowable runtime to passed [sec]
@@ -73,12 +75,16 @@ int main() {
 	
 	// Run particle filter!
 	int num_time_steps = position_meas.size();
+
+	// override num time steps
+	num_time_steps = 5;
+
 	ParticleFilter pf;
 	double total_error[3] = {0,0,0};
 	double cum_mean_error[3] = {0,0,0};
 	
 	for (int i = 0; i < num_time_steps; ++i) {
-		//cout << "Time step: " << i << endl;
+		if(verbose) {cout << "Time step: " << i << endl;}
 		// Read in landmark observations for current time step.
 		ostringstream file;
 		file << "data/observation/observations_" << setfill('0') << setw(6) << i+1 << ".txt";
@@ -151,6 +157,8 @@ int main() {
 				return -1;
 			}
 		}
+
+		if(verbose) {cout<<endl;}
 	}
 	
 	// Output the runtime for the filter.
