@@ -224,7 +224,7 @@ vector<Map::single_landmark_s> ParticleFilter::ConvertToParticleCoordinates(stru
 
 		if(verbose) {cout << "theta: " << p_theta << " old: " << lm_x << " " << lm_y;}
 		
-		double temp_x = lm_x*cos(p_theta) + lm_y*sin(p_theta) + p_x;
+		double temp_x = lm_x*cos(p_theta) + lm_y*sin(p_theta) - p_x;
 		double temp_y = lm_x*sin(p_theta) - lm_y*cos(p_theta) + p_y;
 
 		Map::single_landmark_s converted_landmark;
