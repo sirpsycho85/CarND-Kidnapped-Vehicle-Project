@@ -8,8 +8,8 @@ using namespace std;
 void TestConvertToParticleCoordinates() {
 	struct Particle particle;
 	particle.id = 0;
-	particle.x = 0;
-	particle.y = 0;
+	particle.x = -1;
+	particle.y = -1;
 	particle.theta = M_PI*0.5;
 	particle.weight = 1;
 
@@ -19,6 +19,12 @@ void TestConvertToParticleCoordinates() {
 	}
 	
 	vector<Map::single_landmark_s> landmark_list = map.landmark_list;
+
+	for(int i=0; i < landmark_list.size(); ++i) {
+		cout<< "x=" << landmark_list[i].x_f
+			<< " y=" << landmark_list[i].y_f
+			<< endl;
+	}
 
 	vector<Map::single_landmark_s> converted_landmarks;
 
@@ -30,12 +36,23 @@ void TestConvertToParticleCoordinates() {
 			<< " y=" << converted_landmarks[i].y_f
 			<< endl;
 	}
+}
 
+void TestSimpleCoordianteTransform() {
+	double xp, yp, theta_m_to_p, xlm, ylm;
+	
+	xp = 1;
+	yp = 2;
+	theta_m_to_p = M_PI*0.5;
+	xlm = 2;
+	ylm = 0;
+
+	ParticleFilter::SimpleCoordianteTransform(xp, yp, theta_m_to_p, xlm, ylm);
 }
 
 int main() {
 
-	TestConvertToParticleCoordinates();
-	
+	//TestConvertToParticleCoordinates();
+	TestSimpleCoordianteTransform();
 	return 0;
 }

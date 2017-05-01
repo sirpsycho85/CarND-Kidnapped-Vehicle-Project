@@ -216,7 +216,7 @@ vector<Map::single_landmark_s> ParticleFilter::ConvertToParticleCoordinates(stru
 
 	double p_x = particle.x;
 	double p_y = particle.y;
-	double p_theta = particle.theta * -1.0; //multiplying by -1 because i'm converting landmark to particle coordinates
+	double p_theta = particle.theta;// * -1.0; //multiplying by -1 because i'm converting landmark to particle coordinates
 
 	for(int lm_num = 0; lm_num < landmark_list.size(); ++lm_num) {
 		double lm_x = landmark_list[lm_num].x_f;
@@ -224,8 +224,10 @@ vector<Map::single_landmark_s> ParticleFilter::ConvertToParticleCoordinates(stru
 
 		if(verbose) {cout << "theta: " << p_theta << " old: " << lm_x << " " << lm_y;}
 		
+		//double temp_x = lm_x*cos(p_theta) + lm_y*sin(p_theta) - p_x;
+		//double temp_y = lm_x*sin(p_theta) - lm_y*cos(p_theta) + p_y;
 		double temp_x = lm_x*cos(p_theta) + lm_y*sin(p_theta) - p_x;
-		double temp_y = lm_x*sin(p_theta) - lm_y*cos(p_theta) + p_y;
+		double temp_y = -1*lm_x*sin(p_theta) + lm_y*cos(p_theta) - p_y;
 
 		Map::single_landmark_s converted_landmark;
 		converted_landmark.id_i = landmark_list[lm_num].id_i;
@@ -240,6 +242,21 @@ vector<Map::single_landmark_s> ParticleFilter::ConvertToParticleCoordinates(stru
 	if(verbose) {cout<<endl;}
 
 	return converted_landmarks;
+}
+
+
+void ParticleFilter::SimpleCoordianteTransform(double xp, double yp, double theta_m_to_p, double xlm, double ylm) {
+	cout << "from LM from map to particle coordinates: counter-clockwise rotation" << endl;
+	cout << "xlm = " << xlm << " ylm = " << ylm << endl;
+
+	double xlm_new, ylm_new;
+	xlm_new = (xlm-xp) * cos(theta_m_to_p) + (ylm-yp) * sin(theta_m_to_p);// - xp;
+	ylm_new = -1 * (xlm-xp) * sin(theta_m_to_p) + (ylm-yp) * cos(theta_m_to_p);// - yp;
+	
+	if(fabs(xlm_new) < 0.001) {xlm_new = 0;}
+	if(fabs(ylm_new) < 0.001) {ylm_new = 0;}
+
+	cout << "xlm_new = " << xlm_new << " ylm_new = " << ylm_new << endl;
 }
 
 
