@@ -55,7 +55,9 @@ struct normal_random_variable {
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
-	num_particles = 3;
+	bool verbose = true;
+
+	num_particles = 2;
 	particles.resize(num_particles);
 	weights.resize(num_particles);
 
@@ -78,6 +80,10 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
 		particles[i] = temp_particle;
 		weights[i] = temp_particle.weight;
+
+		if(verbose) {
+			cout << "Particle " << i << "x = " << temp_particle.x << " y = " << temp_particle.y << endl;
+		}
 	}
 
 	is_initialized = true;
@@ -158,7 +164,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			//    dataAssiciation: update copy of observations with landmark IDs
 			//translation
 
-	bool verbose = true;
+	bool verbose = false;
 	for(int p_num = 0; p_num < num_particles; ++p_num) {
 
 		if(verbose) {cout<<"particle: " << p_num<<endl;}
@@ -208,6 +214,8 @@ vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle,
 
 vector<Map::single_landmark_s> ParticleFilter::ConvertToParticleCoordinates(struct Particle particle, vector<Map::single_landmark_s> landmark_list) {
 	
+	//https://math.stackexchange.com/questions/65059/converting-between-two-frames-of-reference-given-two-points
+
 	bool verbose = false;
 	
 	vector<Map::single_landmark_s> converted_landmarks;
@@ -216,7 +224,7 @@ vector<Map::single_landmark_s> ParticleFilter::ConvertToParticleCoordinates(stru
 
 	double p_x = particle.x;
 	double p_y = particle.y;
-	double p_theta = particle.theta;// * -1.0; //multiplying by -1 because i'm converting landmark to particle coordinates
+	double p_theta = particle.theta;
 
 	for(int lm_num = 0; lm_num < landmark_list.size(); ++lm_num) {
 		double lm_x = landmark_list[lm_num].x_f;
@@ -243,25 +251,6 @@ vector<Map::single_landmark_s> ParticleFilter::ConvertToParticleCoordinates(stru
 }
 
 
-void ParticleFilter::SimpleCoordianteTransform(double xp, double yp, double theta_m_to_p, double xlm, double ylm) {
-	cout << "LM from map to particle coordinates: counter-clockwise rotation" << endl;
-
-	cout << "xlm = " << xlm << " ylm = " << ylm << endl;
-
-	double xlm_new, ylm_new;
-	xlm_new = (xlm-xp) * cos(theta_m_to_p) + (ylm-yp) * sin(theta_m_to_p);// - xp;
-	ylm_new = -1 * (xlm-xp) * sin(theta_m_to_p) + (ylm-yp) * cos(theta_m_to_p);// - yp;
-	
-	//xlm_new = (xlm) * cos(theta_m_to_p) + (ylm) * sin(theta_m_to_p) + xp;
-	//ylm_new = -1 * (xlm) * sin(theta_m_to_p) + (ylm) * cos(theta_m_to_p) + yp;
-
-	if(fabs(xlm_new) < 0.001) {xlm_new = 0;}
-	if(fabs(ylm_new) < 0.001) {ylm_new = 0;}
-
-	cout << "xlm_new = " << xlm_new << " ylm_new = " << ylm_new << endl;
-}
-
-
 vector<LandmarkObs> CastLandmarksAsObservations(vector<Map::single_landmark_s> landmark_list) {
 	
 	vector<LandmarkObs> observations;
@@ -282,7 +271,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, vector<Landm
 	
 	//TODO: why are associations always the same
 
-	bool verbose = true;
+	bool verbose = false;
 	if(verbose) {cout<<"data association:" << endl;}
 
 	double min_dist;

@@ -38,21 +38,12 @@ void TestConvertToParticleCoordinates() {
 	}
 }
 
-void TestSimpleCoordianteTransform() {
-	double xp, yp, theta_m_to_p, xlm, ylm;
-	
-	xp = 1;
-	yp = 2;
-	theta_m_to_p = M_PI*0.5;
-	xlm = 2;
-	ylm = 0;
-
-	ParticleFilter::SimpleCoordianteTransform(xp, yp, theta_m_to_p, xlm, ylm);
-}
 
 int main() {
 
 	TestConvertToParticleCoordinates();
 	//TestSimpleCoordianteTransform();
+
+	//Tested landmarks within range in excel sheet
 	return 0;
 }

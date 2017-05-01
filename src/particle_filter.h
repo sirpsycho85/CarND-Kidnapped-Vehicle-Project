@@ -87,7 +87,6 @@ public:
 	
 	vector<Map::single_landmark_s> ConvertToParticleCoordinates(struct Particle particle, vector<Map::single_landmark_s> landmark_list);
 
-	static void SimpleCoordianteTransform(double xp, double yp, double theta_m_to_p, double xm, double ym);
 	/**
 	 * resample Resamples from the updated set of particles to form
 	 *   the new set of particles.

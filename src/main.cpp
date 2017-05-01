@@ -19,7 +19,7 @@ using namespace std;
 
 int main() {
 
-	bool verbose = true;
+	bool verbose = false;
 
 	// parameters related to grading.
 	int time_steps_before_lock_required = 100; // number of time steps before accuracy is checked by grader.
