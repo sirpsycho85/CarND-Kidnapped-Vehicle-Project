@@ -52,7 +52,7 @@ void TestSimpleCoordianteTransform() {
 
 int main() {
 
-	//TestConvertToParticleCoordinates();
-	TestSimpleCoordianteTransform();
+	TestConvertToParticleCoordinates();
+	//TestSimpleCoordianteTransform();
 	return 0;
 }
