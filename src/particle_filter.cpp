@@ -15,12 +15,12 @@
 
 using namespace std;
 
-//TODO: remove unnecessary copying
 //TODO seem to get some constant errors x:39.8926 y:2.68017 don't always vary with initial weights
 //TODO: initialize to 1 or 1/num_particles?
-//TODO: are particles really getting randomly distributed?
+//TODO: how does random work? Are particles really getting randomly distributed?
+//	seems to be the same each time I build
 
-// declaring some functions bc don't want to touch .h file for autograder
+// declaring some functions up top bc don't want to touch .h file for autograder
 vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle, vector<Map::single_landmark_s> landmark_list, double sensor_range);
 vector<LandmarkObs> CastLandmarksAsObservations(vector<Map::single_landmark_s> landmark_list);
 void UpdateParticleWeights(struct Particle particle, vector<LandmarkObs> converted_landmarks_observations, vector<LandmarkObs> associated_observations);
@@ -55,9 +55,9 @@ struct normal_random_variable {
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
-	bool verbose = true;
+	bool verbose = false;
 
-	num_particles = 2;
+	num_particles = 1;
 	particles.resize(num_particles);
 	weights.resize(num_particles);
 
@@ -82,8 +82,10 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		weights[i] = temp_particle.weight;
 
 		if(verbose) {
-			cout << "Particle " << i << "x = " << temp_particle.x << " y = " << temp_particle.y << endl;
-		}
+			cout << "Particle " << i 
+			<< " x = " << temp_particle.x << " y = " << temp_particle.y 
+			<< " theta = " << temp_particle.theta
+			<< endl;}
 	}
 
 	is_initialized = true;
@@ -96,11 +98,22 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
 
+	bool verbose = false;
+
 	for(int i = 0; i < num_particles; ++i) {
 		double x, y, theta;
-		x = particles[i].x;
-		y = particles[i].y;
+
 		theta = particles[i].theta;
+
+		if(verbose){cout << "x = " << particles[i].x
+			<< " y = " << particles[i].y
+			<< " theta = " << particles[i].theta
+			<< " v*t = " << delta_t *velocity
+			<< endl;}
+
+		if(fabs(yaw_rate) < 0.0001) {
+			yaw_rate = 0.0001;
+		}
 
 		particles[i].x += velocity/yaw_rate
 			* (sin(theta + yaw_rate*delta_t) - sin(theta));
@@ -110,6 +123,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 
 		particles[i].theta += yaw_rate*delta_t;
 
+		//TODO: seems like the 
+
 		normal_distribution<double> dist_x(0, std_pos[0]);
 		normal_distribution<double> dist_y(0, std_pos[1]);
 		normal_distribution<double> dist_theta(0, std_pos[2]);
@@ -117,6 +132,10 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 		particles[i].x += dist_x(gen);
 		particles[i].y += dist_y(gen);
 		particles[i].theta += dist_theta(gen);
+
+		if(verbose){cout << "x = " << particles[i].x
+			<< " y = " << particles[i].y
+			<< endl;}
 
 		//TODO why measurement uncertainties, not process uncertanties. Reconcile with Kalman.
 
@@ -277,13 +296,18 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, vector<Landm
 	double min_dist;
 	double current_dist;
 	int nearest_landmark_id;
+	double nearest_x, nearest_y;
 
 	for(int i = 0; i < observations.size(); ++i) {
 
-		if(verbose) {cout<<"obs: " << i;}
+		if(verbose) {cout << "obs: " << i 
+			<< " x: " << observations[i].x << " y: " << observations[i].y
+			<< endl;}
 		
 		min_dist = dist(observations[i].x, observations[i].y, predicted[0].x, predicted[0].y);
 		nearest_landmark_id = predicted[0].id;
+		nearest_x = predicted[0].x;
+		nearest_y = predicted[0].y;
 		
 		for(int j = 1; j < predicted.size(); ++j) {
 			
@@ -291,13 +315,18 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, vector<Landm
 			
 			if(current_dist < min_dist) {
 				nearest_landmark_id = predicted[j].id;
+				nearest_x = predicted[j].x;
+				nearest_y = predicted[j].y;
 				min_dist = current_dist;
 			}
 		}
 
 		observations[i].id = nearest_landmark_id;
 
-		if(verbose) {cout<<" dist: " << min_dist << " landmark: " << nearest_landmark_id << endl;}
+		if(verbose) {cout<<" dist: " << min_dist
+			<< " landmark: " << nearest_landmark_id
+			<< " nearest x: " << nearest_x << " nearest y: " << nearest_y
+			<< endl;}
 	}
 }
 

@@ -38,12 +38,26 @@ void TestConvertToParticleCoordinates() {
 	}
 }
 
+void TestPrediction() {
+	double x_init = 0;
+	double y_init = 0;
+	double theta_init = M_PI/2;
+	double sigma_pos [3] = {0.1, 0.1, 0.0};
+
+	ParticleFilter pf;
+	pf.init(x_init, y_init, theta_init, sigma_pos);
+
+	double delta_t = 1;
+	double velocity = 1;
+	double yawrate = 0;
+	pf.prediction(delta_t, sigma_pos, velocity, yawrate);
+}
 
 int main() {
 
-	TestConvertToParticleCoordinates();
-	//TestSimpleCoordianteTransform();
-
+	//TestConvertToParticleCoordinates();
+	//TestPrediction();
+	//Tested association looking at one particle one timestep for a few LMs
 	//Tested landmarks within range in excel sheet
 	return 0;
 }
