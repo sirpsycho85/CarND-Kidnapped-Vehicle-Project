@@ -45,7 +45,7 @@ int main() {
 	double sigma_landmark [2] = {0.3, 0.3}; // Landmark measurement uncertainty [x [m], y [m]]
 
 	// noise generation
-	default_random_engine gen;
+	default_random_engine gen(std::random_device{}());
 	normal_distribution<double> N_x_init(0, sigma_pos[0]);
 	normal_distribution<double> N_y_init(0, sigma_pos[1]);
 	normal_distribution<double> N_theta_init(0, sigma_pos[2]);
@@ -99,6 +99,7 @@ int main() {
 			n_x = N_x_init(gen);
 			n_y = N_y_init(gen);
 			n_theta = N_theta_init(gen);
+			cout << "gt x = " << gt[i].x << " noise x = " << n_x << endl;
 			pf.init(gt[i].x + n_x, gt[i].y + n_y, gt[i].theta + n_theta, sigma_pos);
 		}
 		else {

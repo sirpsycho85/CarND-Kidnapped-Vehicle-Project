@@ -15,18 +15,13 @@
 
 using namespace std;
 
-//TODO seem to get some constant errors x:39.8926 y:2.68017 don't always vary with initial weights
-//TODO: initialize to 1 or 1/num_particles?
-//TODO: how does random work? Are particles really getting randomly distributed?
-//	seems to be the same each time I build
-
 // declaring some functions up top bc don't want to touch .h file for autograder
 vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle, vector<Map::single_landmark_s> landmark_list, double sensor_range);
 vector<LandmarkObs> CastLandmarksAsObservations(vector<Map::single_landmark_s> landmark_list);
 void UpdateParticleWeights(struct Particle particle, vector<LandmarkObs> converted_landmarks_observations, vector<LandmarkObs> associated_observations);
 LandmarkObs GetLandmarkObservationById(vector<LandmarkObs> landmark_observations, int id);
 
-default_random_engine gen;
+default_random_engine gen(std::random_device{}());
 
 struct normal_random_variable {
 	// Credit: http://stackoverflow.com/questions/6142576/sample-from-multivariate-normal-gaussian-distribution-in-c
@@ -57,7 +52,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
 	bool verbose = false;
 
-	num_particles = 1;
+	num_particles = 10;
 	particles.resize(num_particles);
 	weights.resize(num_particles);
 
@@ -90,8 +85,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
 	is_initialized = true;
 
-	//TODO: do I need a new struct each time? how assignment works...
-	//TODO: do I need to create new default_random_engine each time?
+	//TODO: initialize to 1 or 1/num_particles?
 	// having an separate array of weights helps you pass that as a parameter to the function discrete_distribution
 }
 
@@ -101,9 +95,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	bool verbose = false;
 
 	for(int i = 0; i < num_particles; ++i) {
-		double x, y, theta;
-
-		theta = particles[i].theta;
+		
+		double theta = particles[i].theta;
 
 		if(verbose){cout << "x = " << particles[i].x
 			<< " y = " << particles[i].y
@@ -346,6 +339,7 @@ void UpdateParticleWeights(struct Particle particle, vector<LandmarkObs> convert
 
 	// for every measurement, find the landmark from converted observations that matches ID.
 	// then figure out likelihood and multiply it into the product
+	// remember to update both partile.weight weights[]
 
 	//double product_of_probabilities = 1;
 
