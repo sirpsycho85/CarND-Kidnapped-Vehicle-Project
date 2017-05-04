@@ -99,7 +99,6 @@ int main() {
 			n_x = N_x_init(gen);
 			n_y = N_y_init(gen);
 			n_theta = N_theta_init(gen);
-			cout << "gt x = " << gt[i].x << " noise x = " << n_x << endl;
 			pf.init(gt[i].x + n_x, gt[i].y + n_y, gt[i].theta + n_theta, sigma_pos);
 		}
 		else {

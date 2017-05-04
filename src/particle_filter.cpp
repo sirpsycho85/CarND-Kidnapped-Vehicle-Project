@@ -10,6 +10,7 @@
 #include <iostream>
 #include <numeric>
 #include <cmath>
+#include <math.h>
 #include "Eigen/Dense"
 #include "particle_filter.h"
 
@@ -18,35 +19,11 @@ using namespace std;
 // declaring some functions up top bc don't want to touch .h file for autograder
 vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle, vector<Map::single_landmark_s> landmark_list, double sensor_range);
 vector<LandmarkObs> CastLandmarksAsObservations(vector<Map::single_landmark_s> landmark_list);
-void UpdateParticleWeights(struct Particle particle, vector<LandmarkObs> converted_landmarks_observations, vector<LandmarkObs> associated_observations);
+void UpdateParticleWeights(struct Particle particle, vector<LandmarkObs> converted_landmarks_observations, vector<LandmarkObs> associated_observations, double std_landmark[]);
 LandmarkObs GetLandmarkObservationById(vector<LandmarkObs> landmark_observations, int id);
+double MultivariatePDF(Eigen::VectorXd mean, Eigen::MatrixXd covar, Eigen::VectorXd measurement);
 
 default_random_engine gen(std::random_device{}());
-
-struct normal_random_variable {
-	// Credit: http://stackoverflow.com/questions/6142576/sample-from-multivariate-normal-gaussian-distribution-in-c
-    normal_random_variable(Eigen::MatrixXd const& covar)
-        : normal_random_variable(Eigen::VectorXd::Zero(covar.rows()), covar)
-    {}
-
-    normal_random_variable(Eigen::VectorXd const& mean, Eigen::MatrixXd const& covar)
-        : mean(mean)
-    {
-        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(covar);
-        transform = eigenSolver.eigenvectors() * eigenSolver.eigenvalues().cwiseSqrt().asDiagonal();
-    }
-
-    Eigen::VectorXd mean;
-    Eigen::MatrixXd transform;
-
-    Eigen::VectorXd operator()() const
-    {
-        static std::mt19937 gen{ std::random_device{}() };
-        static std::normal_distribution<> dist;
-
-        return mean + transform * Eigen::VectorXd{ mean.size() }.unaryExpr([&](double x) { return dist(gen); });
-    }
-};
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
@@ -137,8 +114,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 }
 
 
-void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
-		vector<LandmarkObs> observations, Map map_landmarks) {
+void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], vector<LandmarkObs> observations, Map map_landmarks) {
 
 	// TODO: are predicted observations to pass to multi-variate the distances or the absolute locations?
 	// TODO: normalize weights
@@ -194,7 +170,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 		dataAssociation(converted_landmarks_observations, associated_observations);
 
-		UpdateParticleWeights(particles[p_num],converted_landmarks_observations, associated_observations);
+		UpdateParticleWeights(particles[p_num],converted_landmarks_observations, associated_observations, std_landmark);
 
 		if(verbose) {cout<<endl;}
 	}
@@ -324,39 +300,61 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, vector<Landm
 }
 
 
-void UpdateParticleWeights(struct Particle particle, vector<LandmarkObs> converted_landmarks_observations, vector<LandmarkObs> associated_observations) {
-	/*
-	int size = 2;
-	Eigen::MatrixXd covar(size,size);
-	covar << 1, .5,
-	        .5, 1;
+void UpdateParticleWeights(struct Particle particle, 
+	vector<LandmarkObs> converted_landmarks_observations, 
+	vector<LandmarkObs> associated_observations,
+	double std_landmark[]) {
+	
+	bool verbose = false;
 
-	normal_random_variable sample { covar };
+	if(verbose) {cout << "particle id = " << particle.id << endl;}
 
-	std::cout << sample() << std::endl;
-	std::cout << sample() << std::endl;
-	*/
-
-	// for every measurement, find the landmark from converted observations that matches ID.
+	// for each in associated_observations
+	// find the landmark from converted_landmarks_observations that matches ID2
 	// then figure out likelihood and multiply it into the product
 	// remember to update both partile.weight weights[]
 
-	//double product_of_probabilities = 1;
+	//TODO: probabilities seem really small
 
-	bool verbose = false;
+	double product_of_probabilities = 1;
 
 	for(int i = 0; i < associated_observations.size(); ++i) {
-		//get by id from converted_landmark_observations
-		if(verbose) {
-			LandmarkObs myLandmarkObs = GetLandmarkObservationById(converted_landmarks_observations,associated_observations[i].id);
-			cout << myLandmarkObs.id << " ";}
+
+		LandmarkObs myLandmarkObs = GetLandmarkObservationById(converted_landmarks_observations,
+			associated_observations[i].id);
+
+		Eigen::VectorXd mean = Eigen::VectorXd(2);
+		Eigen::MatrixXd covar = Eigen::MatrixXd(2,2);
+		Eigen::VectorXd x = Eigen::VectorXd(2);
+
+		mean << myLandmarkObs.x,myLandmarkObs.y;
+		covar << std_landmark[0],0,0,std_landmark[1];
+		x << associated_observations[i].x,associated_observations[i].y;
+
+		double prob =  MultivariatePDF(mean, covar, x);
+		product_of_probabilities = product_of_probabilities * prob;
 	}
+	cout << product_of_probabilities << endl;
 	if(verbose) {cout << endl;}
 }
 
 
 LandmarkObs GetLandmarkObservationById(vector<LandmarkObs> landmark_observations, int id) {
-	return landmark_observations[id];
+
+	for(int i = 0; i < landmark_observations.size(); ++i) {
+		if(landmark_observations[i].id == id) {
+			return landmark_observations[i];
+		}
+	}
+}
+
+double MultivariatePDF(Eigen::VectorXd mean, Eigen::MatrixXd covar, Eigen::VectorXd measurement) {
+	double term1, term2;
+
+	term1 = exp(-0.5 * (measurement - mean).transpose() * covar.inverse() * (measurement - mean));
+	term2 = sqrt((2*M_PI*covar).determinant());
+	
+	return term1/term2;
 }
 
 
