@@ -78,7 +78,7 @@ int main() {
 	int num_time_steps = position_meas.size();
 
 	// override num time steps
-	num_time_steps = 5;
+	//num_time_steps = 5;
 
 	ParticleFilter pf;
 	double total_error[3] = {0,0,0};

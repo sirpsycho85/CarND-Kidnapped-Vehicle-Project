@@ -319,36 +319,33 @@ void ParticleFilter::resample() {
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
-	/*
-	vector<Particle> sorted_particles = particles;
-	sort(sorted_particles.begin(), sorted_particles.end(), CompareByParticleWeights);
+	//BACKLOG: maps, iterators. Shouldn't need this intermediate new_weights vector.
 
-	vector<double> descending_weights;
-	for(int i = 0; i < sorted_particles.size(); ++i) {
-		descending_weights.push_back(sorted_particles[i].weight);
-	}
-	*/
-
-	//TODO: doesn't seem to follow distribution, see output where all 100 are drawn from one option.
-
-	vector<double> v;
-
-	cout << "particle weights: " << endl;
-	for(int i = 0; i < particles.size(); ++i) {
-		v.push_back(particles[i].weight);
-		cout << particles[i].id << v[i] << endl;
-	}
-
-
-    discrete_distribution<> d(v.begin(), v.end());
+    discrete_distribution<> d(weights.begin(), weights.end());
 
     map<int, int> m;
     for(int n=0; n<100; ++n) {
         ++m[d(gen)];
     }
+
+    vector<double> new_weights;
     for(auto p : m) {
-        std::cout << p.first << " generated " << p.second << " times\n";
+        new_weights.push_back(p.second);
     }
+
+    vector<Particle> new_particles = {};
+    for(int i = 0; i < particles.size(); ++i) {
+    	struct Particle old_p = particles[i];
+    	struct Particle new_p;
+		new_p.id = old_p.id;
+		new_p.x = old_p.x;
+		new_p.y = old_p.y;
+		new_p.theta = old_p.theta;
+		new_p.weight = new_weights[i];
+    }
+
+    particles = new_particles;
+    weights = new_weights;
 }
 
 
