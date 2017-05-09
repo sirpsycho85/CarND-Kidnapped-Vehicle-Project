@@ -19,7 +19,7 @@ using namespace std;
 
 int main() {
 
-	bool verbose = false;
+	bool verbose = true;
 
 	// parameters related to grading.
 	int time_steps_before_lock_required = 100; // number of time steps before accuracy is checked by grader.
@@ -35,6 +35,7 @@ int main() {
 	//Set up parameters here
 	double delta_t = 0.1; // Time elapsed between measurements [sec]
 	double sensor_range = 50; // Sensor range [m]
+
 	
 	/*
 	 * Sigmas - just an estimate, usually comes from uncertainty of sensor, but
@@ -77,7 +78,7 @@ int main() {
 	int num_time_steps = position_meas.size();
 
 	// override num time steps
-	num_time_steps = 2;
+	num_time_steps = 5;
 
 	ParticleFilter pf;
 	double total_error[3] = {0,0,0};
