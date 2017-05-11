@@ -32,11 +32,9 @@ bool CompareByParticleWeights(struct Particle particleA, struct Particle particl
 
 default_random_engine gen(std::random_device{}());
 
-double largest_product_of_probabilities;
-
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
-	num_particles = 5;
+	num_particles = 2;
 	particles.resize(num_particles);
 	weights.resize(num_particles);
 
@@ -121,8 +119,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], v
 		UpdateParticleWeights(particle,observations, chosen_matched_observations )
 			http://stackoverflow.com/questions/6142576/sample-from-multivariate-normal-gaussian-distribution-in-c*/
 
-	largest_product_of_probabilities = 0;
-
 	for(int p_num = 0; p_num < num_particles; ++p_num) {
 		
 		vector<Map::single_landmark_s> landmarks_in_range, converted_landmarks;
@@ -137,7 +133,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], v
 		associated_observations = observations;
 
 		dataAssociation(converted_landmarks_observations, associated_observations);
+		
 		UpdateParticleWeights(particles[p_num],converted_landmarks_observations, associated_observations, std_landmark);
+		
 		weights[p_num] = particles[p_num].weight;
 	}
 
@@ -208,8 +206,6 @@ vector<LandmarkObs> CastLandmarksAsObservations(vector<Map::single_landmark_s> l
 
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, vector<LandmarkObs>& observations) {
-	
-	//TODO: why are associations always the same
 
 	double min_dist;
 	double current_dist;
@@ -244,14 +240,6 @@ void UpdateParticleWeights(struct Particle &particle,
 	vector<LandmarkObs> converted_landmarks_observations, 
 	vector<LandmarkObs> associated_observations,
 	double std_landmark[]) {
-	
-
-	// for each in associated_observations
-	// find the landmark from converted_landmarks_observations that matches ID2
-	// then figure out likelihood and multiply it into the product
-	// remember to update both partile.weight and weights[].
-
-	//TODO: largest_product_of_probabilities which is product for "best" particle should get larger with more particles...
 
 	double new_weight = 1;
 
@@ -273,10 +261,6 @@ void UpdateParticleWeights(struct Particle &particle,
 	}
 
 	particle.weight = new_weight;
-
-	if(new_weight > largest_product_of_probabilities) {
-			largest_product_of_probabilities = new_weight;
-	}
 }
 
 
@@ -319,33 +303,52 @@ void ParticleFilter::resample() {
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
-	//BACKLOG: maps, iterators. Shouldn't need this intermediate new_weights vector.
+	//TODO: fix this - should have new particles based on the counts from the resampling
+	//TODO: what should the weights be of resampled particles?!
 
     discrete_distribution<> d(weights.begin(), weights.end());
 
-    map<int, int> m;
-    for(int n=0; n<100; ++n) {
-        ++m[d(gen)];
+    map<int, int> map_of_particle_counts;
+    for(int n=0; n<num_particles; ++n) {
+        ++map_of_particle_counts[d(gen)];
     }
 
-    vector<double> new_weights;
-    for(auto p : m) {
-        new_weights.push_back(p.second);
-    }
+    map<int, int>::iterator it = map_of_particle_counts.begin();
 
     vector<Particle> new_particles = {};
-    for(int i = 0; i < particles.size(); ++i) {
-    	struct Particle old_p = particles[i];
-    	struct Particle new_p;
-		new_p.id = old_p.id;
-		new_p.x = old_p.x;
-		new_p.y = old_p.y;
-		new_p.theta = old_p.theta;
-		new_p.weight = new_weights[i];
+
+    while(it != map_of_particle_counts.end()) {
+
+    	int particle_index = it->first;
+    	int particle_count = it->second;
+
+    	for (int i = 0; i < particle_count; ++i) {
+    		struct Particle new_particle = particles[particle_index];
+    		new_particles.push_back(new_particle);
+    	}
+
+    	it++;
     }
 
+  //   vector<double> resampled_particle_counts;
+  //   for(auto p : map_of_particle_counts) {
+  //       resampled_particle_counts.push_back(p.second);
+  //   }
+
+  //   vector<Particle> new_particles = {};
+  //   for(int i = 0; i < particles.size(); ++i) {
+    	// struct Particle old_p = particles[i];
+  //   	struct Particle new_p;
+		// new_p.id = old_p.id;
+		// new_p.x = old_p.x;
+		// new_p.y = old_p.y;
+		// new_p.theta = old_p.theta;
+		// new_p.weight = resampled_particle_counts[i];
+		// new_particles.push_back(new_p);
+  //   }
+
     particles = new_particles;
-    weights = new_weights;
+    // weights = resampled_particle_counts;
 }
 
 
