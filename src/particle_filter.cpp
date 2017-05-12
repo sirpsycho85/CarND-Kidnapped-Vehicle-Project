@@ -34,7 +34,7 @@ default_random_engine gen(std::random_device{}());
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
-	num_particles = 2;
+	num_particles = 5;
 	particles.resize(num_particles);
 	weights.resize(num_particles);
 
@@ -53,16 +53,13 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		temp_particle.x = dist_x(gen);
 		temp_particle.y = dist_y(gen);
 		temp_particle.theta = dist_theta(gen);
-		temp_particle.weight = 1;
+		temp_particle.weight = 1/num_particles;
 
 		particles[i] = temp_particle;
 		weights[i] = temp_particle.weight;
 	}
 
 	is_initialized = true;
-
-	//TODO: initialize to 1 or 1/num_particles?
-	// having an separate array of weights helps you pass that as a parameter to the function discrete_distribution
 }
 
 
@@ -84,8 +81,6 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 
 		particles[i].theta += yaw_rate*delta_t;
 
-		//TODO: seems like the 
-
 		normal_distribution<double> dist_x(0, std_pos[0]);
 		normal_distribution<double> dist_y(0, std_pos[1]);
 		normal_distribution<double> dist_theta(0, std_pos[2]);
@@ -94,30 +89,13 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 		particles[i].y += dist_y(gen);
 		particles[i].theta += dist_theta(gen);
 
-		//TODO why measurement uncertainties, not process uncertanties. Reconcile with Kalman.
-
-		//TODO when this is called from main why does it say "noiseless"
+		// Why measurement uncertainties, not process uncertanties? Reconcile with Kalman.
+		// When this is called from main why does it say "noiseless"
 	}
 }
 
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], vector<LandmarkObs> observations, Map map_landmarks) {
-
-	// TODO: are predicted observations to pass to multi-variate the distances or the absolute locations?
-	// TODO: normalize weights
-	// TODO: handle empty 'predicted' or 'observations'
-	// TODO: how do you know the map y points downward?
-	// TODO: rotation matrix in article disagrees with wiki...
-	// Note: Might be convenient in dataAssociation to create a new vector with actual landmarks
-	// 		That way you don't have to search through them again
-
-	/*for each particle:
-		landmarks_in_range = GetLandmarksWithingSensorRange(particle,landmarks,sensorRange)
-		converted_landmarks = ConvertToParticleCoordinates(particle,remaining_landmarks)
-		chosen_matched_observations = observations // just a copy for input into next function
-		dataAssociation(converted_landmarks ,chosen_matched_observations )
-		UpdateParticleWeights(particle,observations, chosen_matched_observations )
-			http://stackoverflow.com/questions/6142576/sample-from-multivariate-normal-gaussian-distribution-in-c*/
 
 	for(int p_num = 0; p_num < num_particles; ++p_num) {
 		
@@ -140,6 +118,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], v
 	}
 
 	NormalizeParticleWeights(particles, weights);
+
+	// Might be convenient in dataAssociation to create a new vector with actual landmarks
+	// That way you don't have to search through them again
 }
 
 
@@ -162,7 +143,7 @@ vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle,
 
 vector<Map::single_landmark_s> ParticleFilter::ConvertToParticleCoordinates(struct Particle particle, vector<Map::single_landmark_s> landmark_list) {
 	
-	//https://math.stackexchange.com/questions/65059/converting-between-two-frames-of-reference-given-two-points
+	// https://math.stackexchange.com/questions/65059/converting-between-two-frames-of-reference-given-two-points
 	
 	vector<Map::single_landmark_s> converted_landmarks;
 
@@ -266,11 +247,15 @@ void UpdateParticleWeights(struct Particle &particle,
 
 LandmarkObs GetLandmarkObservationById(vector<LandmarkObs> landmark_observations, int id) {
 
+	LandmarkObs obs;
 	for(int i = 0; i < landmark_observations.size(); ++i) {
 		if(landmark_observations[i].id == id) {
-			return landmark_observations[i];
+			obs = landmark_observations[i];
+			break;
 		}
 	}
+
+	return obs;
 }
 
 
@@ -299,12 +284,6 @@ void NormalizeParticleWeights(vector<Particle> &particles, vector<double> &weigh
 
 
 void ParticleFilter::resample() {
-	// TODO: Resample particles with replacement with probability proportional to their weight. 
-	// NOTE: You may find std::discrete_distribution helpful here.
-	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
-
-	//TODO: fix this - should have new particles based on the counts from the resampling
-	//TODO: what should the weights be of resampled particles?!
 
     discrete_distribution<> d(weights.begin(), weights.end());
 
@@ -330,25 +309,7 @@ void ParticleFilter::resample() {
     	it++;
     }
 
-  //   vector<double> resampled_particle_counts;
-  //   for(auto p : map_of_particle_counts) {
-  //       resampled_particle_counts.push_back(p.second);
-  //   }
-
-  //   vector<Particle> new_particles = {};
-  //   for(int i = 0; i < particles.size(); ++i) {
-    	// struct Particle old_p = particles[i];
-  //   	struct Particle new_p;
-		// new_p.id = old_p.id;
-		// new_p.x = old_p.x;
-		// new_p.y = old_p.y;
-		// new_p.theta = old_p.theta;
-		// new_p.weight = resampled_particle_counts[i];
-		// new_particles.push_back(new_p);
-  //   }
-
     particles = new_particles;
-    // weights = resampled_particle_counts;
 }
 
 
