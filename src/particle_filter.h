@@ -10,8 +10,6 @@
 #define PARTICLE_FILTER_H_
 
 #include "helper_functions.h"
-#include <iostream>
-#include "Eigen/Dense"
 
 using namespace std;
 
@@ -83,9 +81,6 @@ public:
 	 */
 	void updateWeights(double sensor_range, double std_landmark[], std::vector<LandmarkObs> observations,
 			Map map_landmarks);
-	
-	
-	vector<Map::single_landmark_s> ConvertToParticleCoordinates(struct Particle particle, vector<Map::single_landmark_s> landmark_list);
 
 	/**
 	 * resample Resamples from the updated set of particles to form

@@ -24,6 +24,7 @@ using namespace std;
 // declaring some functions up top bc don't want to touch .h file for autograder
 vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle, vector<Map::single_landmark_s> landmark_list, double sensor_range);
 vector<LandmarkObs> CastLandmarksAsObservations(vector<Map::single_landmark_s> landmark_list);
+vector<Map::single_landmark_s> ConvertToParticleCoordinates(struct Particle particle, vector<Map::single_landmark_s> landmark_list);
 void UpdateParticleWeights(struct Particle &particle, vector<LandmarkObs> converted_landmarks_observations, vector<LandmarkObs> associated_observations, double std_landmark[]);
 LandmarkObs GetLandmarkObservationById(vector<LandmarkObs> landmark_observations, int id);
 double MultivariatePDF(Eigen::VectorXd mean, Eigen::MatrixXd covar, Eigen::VectorXd measurement);
@@ -104,7 +105,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], v
 
 		landmarks_in_range = GetLandmarksWithinRange(particles[p_num], map_landmarks.landmark_list, sensor_range);
 
-		converted_landmarks = ParticleFilter::ConvertToParticleCoordinates(particles[p_num], landmarks_in_range);
+		converted_landmarks = ConvertToParticleCoordinates(particles[p_num], landmarks_in_range);
 
 		converted_landmarks_observations = CastLandmarksAsObservations(converted_landmarks);
 
@@ -141,7 +142,7 @@ vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle,
 }
 
 
-vector<Map::single_landmark_s> ParticleFilter::ConvertToParticleCoordinates(struct Particle particle, vector<Map::single_landmark_s> landmark_list) {
+vector<Map::single_landmark_s> ConvertToParticleCoordinates(struct Particle particle, vector<Map::single_landmark_s> landmark_list) {
 	
 	// https://math.stackexchange.com/questions/65059/converting-between-two-frames-of-reference-given-two-points
 	
