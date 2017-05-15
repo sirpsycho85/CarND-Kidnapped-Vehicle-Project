@@ -19,11 +19,9 @@ using namespace std;
 
 int main() {
 
-	bool verbose = false;
-
 	// parameters related to grading.
 	int time_steps_before_lock_required = 100; // number of time steps before accuracy is checked by grader.
-	double max_runtime = 45; // Max allowable runtime to passed [sec]
+	double max_runtime = 45; // Max allowable runtime to pass [sec]
 	double max_translation_error = 1; // Max allowable translation error to pass [m]
 	double max_yaw_error = 0.05; // Max allowable yaw error [rad]
 
@@ -46,7 +44,8 @@ int main() {
 	double sigma_landmark [2] = {0.3, 0.3}; // Landmark measurement uncertainty [x [m], y [m]]
 
 	// noise generation
-	default_random_engine gen(std::random_device{}());
+	// default_random_engine gen(std::random_device{}());
+	default_random_engine gen;
 	normal_distribution<double> N_x_init(0, sigma_pos[0]);
 	normal_distribution<double> N_y_init(0, sigma_pos[1]);
 	normal_distribution<double> N_theta_init(0, sigma_pos[2]);
@@ -77,15 +76,11 @@ int main() {
 	// Run particle filter!
 	int num_time_steps = position_meas.size();
 
-	// override num time steps
-	//num_time_steps = 5;
-
 	ParticleFilter pf;
 	double total_error[3] = {0,0,0};
 	double cum_mean_error[3] = {0,0,0};
 	
 	for (int i = 0; i < num_time_steps; ++i) {
-		if(verbose) {cout << "Time step: " << i << endl;}
 		// Read in landmark observations for current time step.
 		ostringstream file;
 		file << "data/observation/observations_" << setfill('0') << setw(6) << i+1 << ".txt";
@@ -158,8 +153,6 @@ int main() {
 				return -1;
 			}
 		}
-
-		if(verbose) {cout<<endl;}
 	}
 	
 	// Output the runtime for the filter.
