@@ -18,7 +18,7 @@ using namespace std;
 
 
 int main() {
-
+	
 	// parameters related to grading.
 	int time_steps_before_lock_required = 100; // number of time steps before accuracy is checked by grader.
 	double max_runtime = 45; // Max allowable runtime to pass [sec]
@@ -33,7 +33,6 @@ int main() {
 	//Set up parameters here
 	double delta_t = 0.1; // Time elapsed between measurements [sec]
 	double sensor_range = 50; // Sensor range [m]
-
 	
 	/*
 	 * Sigmas - just an estimate, usually comes from uncertainty of sensor, but
@@ -44,7 +43,6 @@ int main() {
 	double sigma_landmark [2] = {0.3, 0.3}; // Landmark measurement uncertainty [x [m], y [m]]
 
 	// noise generation
-	// default_random_engine gen(std::random_device{}());
 	default_random_engine gen;
 	normal_distribution<double> N_x_init(0, sigma_pos[0]);
 	normal_distribution<double> N_y_init(0, sigma_pos[1]);
@@ -75,12 +73,12 @@ int main() {
 	
 	// Run particle filter!
 	int num_time_steps = position_meas.size();
-
 	ParticleFilter pf;
 	double total_error[3] = {0,0,0};
 	double cum_mean_error[3] = {0,0,0};
 	
 	for (int i = 0; i < num_time_steps; ++i) {
+		cout << "Time step: " << i << endl;
 		// Read in landmark observations for current time step.
 		ostringstream file;
 		file << "data/observation/observations_" << setfill('0') << setw(6) << i+1 << ".txt";
@@ -136,7 +134,7 @@ int main() {
 		}
 		
 		// Print the cumulative weighted error
-		//cout << "Cumulative mean weighted error: x " << cum_mean_error[0] << " y " << cum_mean_error[1] << " yaw " << cum_mean_error[2] << endl;
+		cout << "Cumulative mean weighted error: x " << cum_mean_error[0] << " y " << cum_mean_error[1] << " yaw " << cum_mean_error[2] << endl;
 		
 		// If the error is too high, say so and then exit.
 		if (i >= time_steps_before_lock_required) {
@@ -174,5 +172,3 @@ int main() {
 	
 	return 0;
 }
-
-

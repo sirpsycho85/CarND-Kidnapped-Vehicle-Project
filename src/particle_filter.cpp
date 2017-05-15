@@ -19,8 +19,6 @@
 
 using namespace std;
 
-//TODO: get original .h file and make appropriate changes
-
 // declaring some functions up top bc don't want to touch .h file for autograder
 vector<Map::single_landmark_s> GetLandmarksWithinRange(struct Particle particle, vector<Map::single_landmark_s> landmark_list, double sensor_range);
 vector<LandmarkObs> CastLandmarksAsObservations(vector<Map::single_landmark_s> landmark_list);
